@@ -251,7 +251,7 @@ network* network_accept(network* nw){ //available for servers in TCP only
 
 	//create new client instance
 	network* client_nw = network_create(
-		network_getOwner (nw),
+		NETWORK__CLIENT,
 		network_getPrtcl (nw),
 		network_getIPType(nw)
 	);
