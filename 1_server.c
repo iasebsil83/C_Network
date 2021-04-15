@@ -29,7 +29,7 @@
 
 
 
-/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 2_Server [V.V.V] ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 1_Server [V.V.V] ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                   network.h demonstration program : server side
 
         Blablabla about the subject.
