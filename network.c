@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <stdint.h>
 #include <string.h>
 
 
@@ -336,7 +335,7 @@ int network_connect(network* nw, char* address, unsigned short int port){ //avai
 		nw->sock_size
 	);
 	if(errorCode){
-		printf("RUNTIME ERROR > network.c : network_connect() : Could not connect to server (Error code %i).\n", errorCode);
+		printf("RUNTIME ERROR > network.c : network_connect() : Could not connect to server [0x%02x].\n", errorCode);
 		return 0;
 	}
 
