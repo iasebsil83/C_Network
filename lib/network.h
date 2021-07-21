@@ -8,34 +8,10 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 // -------------------------------- DEFINITIONS --------------------------------
 
 //standard network types
 #include <arpa/inet.h>
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -91,18 +67,6 @@ typedef struct{
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 // -------------------------------- BASICS --------------------------------
 
 //create - delete
@@ -119,20 +83,14 @@ int network_connect(network* nw, char* address, unsigned short int port); //avai
 
 
 //send - receive
-void network_sendTo(network* src, network* dest, char* data, size_t len);    // #data# must not be NULL or unallocated
-void network_receiveFrom(network* src, network* dest, char* data, size_t len); // #data# shall be NULL or unallocated
+void network_sendTo(network* src, network* dest, char* data, size_t len);      // #data# must not be NULL or unallocated
+void network_receiveFrom(network* src, network* dest, char* data, size_t len); // #data# shall be NULL or unallocated//get/set info
 
 
 
-
-
-
-
-
-
-
-
-
+//get / set info
+char* network_getAddress(network* nw);                                         //will allocate 16 bytes
+void network_setInfo(network* nw, char* address, unsigned short int port);
 
 
 
