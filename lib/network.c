@@ -567,25 +567,25 @@ char* network_getAddress(network* nw){ //will allocate 16 bytes
 		address[ 6] = network_byteToChar(  ipv6_address[0x3] & 0x0f       );
 		address[ 7] = network_byteToChar( (ipv6_address[0x3] & 0xf0) >> 4 );
 
-		address[ 8] = network_byteToChar(  ipv6_address[0x4] & 0x0f );
+		address[ 8] = network_byteToChar(  ipv6_address[0x4] & 0x0f       );
 		address[ 9] = network_byteToChar( (ipv6_address[0x4] & 0xf0) >> 4 );
 
-		address[10] = network_byteToChar(  ipv6_address[0x5] & 0x0f );
+		address[10] = network_byteToChar(  ipv6_address[0x5] & 0x0f       );
 		address[11] = network_byteToChar( (ipv6_address[0x5] & 0xf0) >> 4 );
 
-		address[12] = network_byteToChar(  ipv6_address[0x6] & 0x0f );
+		address[12] = network_byteToChar(  ipv6_address[0x6] & 0x0f       );
 		address[13] = network_byteToChar( (ipv6_address[0x6] & 0xf0) >> 4 );
 
-		address[14] = network_byteToChar(  ipv6_address[0x7] & 0x0f );
+		address[14] = network_byteToChar(  ipv6_address[0x7] & 0x0f       );
 		address[15] = network_byteToChar( (ipv6_address[0x7] & 0xf0) >> 4 );
 
-		address[16] = network_byteToChar(  ipv6_address[0x8] & 0x0f );
+		address[16] = network_byteToChar(  ipv6_address[0x8] & 0x0f       );
 		address[17] = network_byteToChar( (ipv6_address[0x8] & 0xf0) >> 4 );
 
-		address[18] = network_byteToChar(  ipv6_address[0x9] & 0x0f );
+		address[18] = network_byteToChar(  ipv6_address[0x9] & 0x0f       );
 		address[19] = network_byteToChar( (ipv6_address[0x9] & 0xf0) >> 4 );
 
-		address[20] = network_byteToChar(  ipv6_address[0xa] & 0x0f );
+		address[20] = network_byteToChar(  ipv6_address[0xa] & 0x0f       );
 		address[21] = network_byteToChar( (ipv6_address[0xa] & 0xf0) >> 4 );
 
 		address[22] = network_byteToChar(  ipv6_address[0xb] & 0x0f       );
@@ -627,18 +627,12 @@ char* network_getAddress(network* nw){ //will allocate 16 bytes
 		address[ 6] = network_byteToChar( (ipv4_address & 0xf0000000) >> 28 );
 		address[ 7] = network_byteToChar( (ipv4_address & 0x0f000000) >> 24 );
 
-		address[ 8] = 0; address[ 9] = 0;
-		address[10] = 0; address[11] = 0;
-		address[12] = 0; address[13] = 0;
-		address[14] = 0; address[15] = 0;
-		address[16] = 0; address[17] = 0;
-		address[18] = 0; address[19] = 0;
-		address[20] = 0; address[21] = 0;
-		address[22] = 0; address[23] = 0;
-		address[24] = 0; address[25] = 0;
-		address[26] = 0; address[27] = 0;
-		address[28] = 0; address[29] = 0;
-		address[30] = 0; address[31] = 0;
+		address[ 8] = 0; address[ 9] = 0; address[10] = 0; address[11] = 0;
+		address[12] = 0; address[13] = 0; address[14] = 0; address[15] = 0;
+		address[16] = 0; address[17] = 0; address[18] = 0; address[19] = 0;
+		address[20] = 0; address[21] = 0; address[22] = 0; address[23] = 0;
+		address[24] = 0; address[25] = 0; address[26] = 0; address[27] = 0;
+		address[28] = 0; address[29] = 0; address[30] = 0; address[31] = 0;
 	}
 
 	return address;

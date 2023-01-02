@@ -1,11 +1,11 @@
 This program is a simple utility library that allows you to create
 and use TCP/UDP networks in IPv4/IPv6 very easily.
 
-Two programs have been made as a demonstration :
+Two programs have been made as demonstrations :
 > src/1_server.c 
 > src/2_client.c
 
-More information about this library are available in lib/network.c.
+More information about this library is available in lib/network.c.
 
 
 

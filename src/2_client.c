@@ -6,14 +6,8 @@
 #include <unistd.h>
 #include <string.h>
 
-
-
 //network utility
 #include "../lib/network.h"
-
-
-
-
 
 
 
@@ -50,36 +44,24 @@
 
 
 
-
-
-
-
 // ---------------- DEFINITIONS ----------------
 
 //connection
+#define UDP_ADDRESS_IPV4 "192.168.0.108"
+#define UDP_ADDRESS_IPV6 "2a01:cb1c:8262:c000:2d34:bc:c909:b52"
 #define PORT 8080
-
-
 
 //message
 #define MESSAGE_LENGTH_MAX 100
 
-
-
-// >>>>>>>>>>>>>>>>>>>>>>>>>>>> THERE IS 4 MODES FOR THIS EXAMPLE PROGRAM <<<<<<<<<<<<<<<<<<<<<<<<
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>> THERE ARE 4 MODES FOR THIS EXAMPLE PROGRAM <<<<<<<<<<<<<<<<<<<<<<<<
 #define MODE__TCP_IPV4 0x00
 #define MODE__TCP_IPV6 0x01
 #define MODE__UDP_IPV4 0x02
 #define MODE__UDP_IPV6 0x03
 
-
-
-//choose the mode you want
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<< CHOOSE the mode you want
 #define DEMONSTRATION_MODE MODE__UDP_IPV4
-
-
-
-
 
 
 
@@ -113,10 +95,6 @@ void getUserInput(char* msg, int maxLength){
 
 
 
-
-
-
-
 // ---------------- EXECUTION ----------------
 
 //main
@@ -125,397 +103,21 @@ int main(){
 	//select demonstration mode
 	switch(DEMONSTRATION_MODE){
 
-
-
-
-
-
-
-
-
-
-
-
-		// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> EXAMPLE : TCP IPV4 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 		case MODE__TCP_IPV4:{
-			printf("Client > This is a basic demonstration of \"network.c/.h\"\n         for TCP communication in IPv4 (client side).\n");
-
-
-
-			// ---- START ----
-
-			//create socket
-			network* nw = network_create(
-				NETWORK__CLIENT,
-				NETWORK__TCP,
-				NETWORK__IPV4
-			);
-
-			//try to connect
-			while( !network_connect(nw, "127.0.0.1", PORT) ){ //local address
-				usleep(250000);
-			}
-			printf("Client > Connected to server.\n");
-
-
-
-			// ---- DATA TRANSFERS ----
-
-			//main loop
-			char message[MESSAGE_LENGTH_MAX];
-			while(1){
-
-
-
-				// ---- RECEIVE ----
-
-				//receive reply (message will be reset automatically before reception)
-				network_receiveFrom(
-					nw, NULL,
-					message, MESSAGE_LENGTH_MAX
-				);
-
-				//exit reply
-				if(!strncmp(message,"exit",4)){
-					printf("Client > Exit request received.\n");
-					break;
-				}
-
-				//print reply
-				printf("Client > Message [%s] received.\n", message);
-
-
-
-				// ---- SEND ----
-
-				//get user input
-				printf("Client > Write something to send to server : ");
-				getUserInput(message, MESSAGE_LENGTH_MAX);
-
-				//send message
-				network_sendTo(
-					nw, NULL,
-					message, MESSAGE_LENGTH_MAX
-				);
-
-				//exit reply
-				if(!strncmp(message,"exit",4)){
-					printf("Client > Exit request sent.\n");
-					break;
-				}
-			}
-
-
-
-			// ---- STOP ----
-
-			//end connection
-			network_delete(nw);
-			printf("Client > Ended network connection.\n");
-
-		// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> END OF EXAMPLE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+			#include "2_client__tcp_ipv4.c"
 		}break;
 
-
-
-
-
-
-
-
-
-
-
-
-		// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> EXAMPLE : TCP IPV6 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 		case MODE__TCP_IPV6:{
-			printf("Client > This is a basic demonstration of \"network.c/.h\"\n         for TCP communication in IPv6 (client side).\n");
-
-
-
-			// ---- START ----
-
-			//create socket
-			network* nw = network_create(
-				NETWORK__CLIENT,
-				NETWORK__TCP,
-				NETWORK__IPV6
-			);
-
-			//try to connect
-			while( !network_connect(nw, "::1", PORT) ){ //local address
-				usleep(250000);
-			}
-			printf("Client > Connected to server.\n");
-
-
-
-			// ---- DATA TRANSFERS ----
-
-			//main loop
-			char message[MESSAGE_LENGTH_MAX];
-			while(1){
-
-
-
-				// ---- RECEIVE ----
-
-				//receive reply (message will be reset automatically before reception)
-				network_receiveFrom(
-					nw, NULL,
-					message, MESSAGE_LENGTH_MAX
-				);
-
-				//exit reply
-				if(!strncmp(message,"exit",4)){
-					printf("Client > Exit request received.\n");
-					break;
-				}
-
-				//print reply
-				printf("Client > Message [%s] received.\n", message);
-
-
-
-				// ---- SEND ----
-
-				//get user input
-				printf("Client > Write something to send to server : ");
-				getUserInput(message, MESSAGE_LENGTH_MAX);
-
-				//send message
-				network_sendTo(
-					nw, NULL,
-					message, MESSAGE_LENGTH_MAX
-				);
-
-				//exit reply
-				if(!strncmp(message,"exit",4)){
-					printf("Client > Exit request sent.\n");
-					break;
-				}
-			}
-
-
-
-			// ---- STOP ----
-
-			//end connection
-			network_delete(nw);
-			printf("Client > Ended network connection.\n");
-
-		// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> END OF EXAMPLE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+			#include "2_client__tcp_ipv6.c"
 		}break;
 
-
-
-
-
-
-
-
-
-
-
-
-		// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> EXAMPLE : UDP IPV4 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 		case MODE__UDP_IPV4:{
-			printf("Client > This is a basic demonstration of \"network.c/.h\"\n         for UDP communication in IPv4 (client side).\n");
-
-
-
-			// ---- START ----
-
-			//create socket
-			network* nw = network_create(
-				NETWORK__CLIENT,
-				NETWORK__UDP,
-				NETWORK__IPV4
-			);
-
-			//create a network instance for the incomming server
-			network* server = network_create(
-				NETWORK__SERVER,
-				NETWORK__UDP,
-				NETWORK__IPV4
-			);
-
-
-
-			// ---- DATA TRANSFERS ----
-
-			//main loop
-			char message[MESSAGE_LENGTH_MAX];
-			while(1){
-
-
-
-				// ---- RECEIVE ----
-
-				//receive reply (message will be reset automatically before reception)
-				network_setInfo(server, "127.0.0.1", PORT);
-				network_receiveFrom(
-					nw, server,
-					message, MESSAGE_LENGTH_MAX
-				);
-
-				//exit reply
-				if(!strncmp(message,"exit",4)){
-					printf("Client > Exit request received.\n");
-					break;
-				}
-
-				//print reply
-				char* receivedAddress = network_getAddress(server);
-				printf("Client > Incomming message [%s] received from \"%c%c.%c%c.%c%c.%c%c\".\n",
-					message,
-					receivedAddress[0], receivedAddress[1],
-					receivedAddress[2], receivedAddress[3],
-					receivedAddress[4], receivedAddress[5],
-					receivedAddress[6], receivedAddress[7]
-				);
-				free(receivedAddress);
-
-
-
-				// ---- SEND ----
-
-				//get user input
-				printf("Client > Write something to send to server : ");
-				getUserInput(message, MESSAGE_LENGTH_MAX);
-
-				//send message
-				network_setInfo(server, "127.0.0.1", PORT); //local address
-				network_sendTo(
-					nw, server,
-					message, MESSAGE_LENGTH_MAX
-				);
-
-				//exit reply
-				if(!strncmp(message,"exit",4)){
-					printf("Client > Exit request sent.\n");
-					break;
-				}
-
-				//wait a bit (500ms) in order to let the client receive the message before us
-				usleep(500000);
-			}
-
-
-
-			// ---- STOP ----
-
-			//end connection
-			network_delete(nw);
-			printf("Client > Ended network connection.\n");
-
-		// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> END OF EXAMPLE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+			#include "2_client__udp_ipv4.c"
 		}break;
 
-
-
-
-
-
-
-
-
-
-
-
-		// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> EXAMPLE : UDP IPV6 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 		case MODE__UDP_IPV6:{
-			printf("Client > This is a basic demonstration of \"network.c/.h\"\n         for UDP communication in IPv6 (client side).\n");
-
-
-
-			// ---- START ----
-
-			//create socket
-			network* nw = network_create(
-				NETWORK__CLIENT,
-				NETWORK__UDP,
-				NETWORK__IPV6
-			);
-
-			//create a network instance for the incomming server
-			network* server = network_create(
-				NETWORK__SERVER,
-				NETWORK__UDP,
-				NETWORK__IPV6
-			);
-
-
-
-			// ---- DATA TRANSFERS ----
-
-			//main loop
-			char message[MESSAGE_LENGTH_MAX];
-			while(1){
-
-
-
-				// ---- RECEIVE ----
-
-				//receive reply (message will be reset automatically before reception)
-				network_receiveFrom(
-					nw, server,
-					message, MESSAGE_LENGTH_MAX
-				);
-
-				//exit reply
-				if(!strncmp(message,"exit",4)){
-					printf("Client > Exit request received.\n");
-					break;
-				}
-
-				//print reply
-				char* receivedAddress = network_getAddress(server);
-				printf("Client > Incomming message [%s] received from \"%c%c:%c%c:%c%c:%c%c:%c%c:%c%c:%c%c:%c%c\".\n",
-					message,
-					receivedAddress[ 0], receivedAddress[ 1], receivedAddress[ 2], receivedAddress[ 3],
-					receivedAddress[ 4], receivedAddress[ 5], receivedAddress[ 6], receivedAddress[ 7],
-					receivedAddress[ 8], receivedAddress[ 9], receivedAddress[10], receivedAddress[11],
-					receivedAddress[12], receivedAddress[13], receivedAddress[14], receivedAddress[15]
-				);
-				free(receivedAddress);
-
-
-
-				// ---- SEND ----
-
-				//get user input
-				printf("Client > Write something to send to server : ");
-				getUserInput(message, MESSAGE_LENGTH_MAX);
-
-				//send message
-				network_setInfo(server, "::1", PORT); //local address
-				network_sendTo(
-					nw, server,
-					message, MESSAGE_LENGTH_MAX
-				);
-
-				//exit reply
-				if(!strncmp(message,"exit",4)){
-					printf("Client > Exit request sent.\n");
-					break;
-				}
-
-				//wait a bit (500ms) in order to let the client receive the message before us
-				usleep(500000);
-			}
-
-
-
-			// ---- STOP ----
-
-			//end connection
-			network_delete(nw);
-			printf("Client > Ended network connection.\n");
-
-		// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> END OF EXAMPLE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+			#include "2_client__udp_ipv6.c"
 		}break;
-
 	}
 
 	return EXIT_SUCCESS;
