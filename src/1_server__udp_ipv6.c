@@ -12,7 +12,7 @@ network* nw = network_create(
 );
 
 //bind all addresses
-network_bind(nw, PORT);
+network_bind(nw, SERVER_PORT);
 
 //create a network instance for the incomming client
 network* client = network_create(

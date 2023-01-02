@@ -12,7 +12,7 @@ network* nw = network_create(
 );
 
 //bind all addresses
-network_bind(nw, PORT);
+network_bind(nw, SERVER_PORT);
 
 //accept the first address wanting to connect
 network* client = network_accept(nw);

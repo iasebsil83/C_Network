@@ -47,7 +47,7 @@
 // ---------------- DEFINITIONS ----------------
 
 //connection
-#define PORT 8080
+#define SERVER_PORT 8080
 
 //message
 #define MESSAGE_LENGTH_MAX 100
@@ -59,7 +59,7 @@
 #define MODE__UDP_IPV6 0x03
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<< CHOOSE the mode you want
-#define DEMONSTRATION_MODE MODE__UDP_IPV4
+#define DEMONSTRATION_MODE MODE__TCP_IPV4
 
 
 

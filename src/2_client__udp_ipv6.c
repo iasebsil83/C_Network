@@ -62,7 +62,7 @@ while(1){
 	getUserInput(message, MESSAGE_LENGTH_MAX);
 
 	//send message
-	network_setInfo(server, UDP_ADDRESS_IPV6, PORT); //local address
+	network_setInfo(server, SERVER_ADDRESS_IPV6, SERVER_PORT);
 	network_sendTo(
 		nw, server,
 		message, MESSAGE_LENGTH_MAX

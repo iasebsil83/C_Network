@@ -15,7 +15,7 @@ network* nw = network_create(
 );
 
 //try to connect
-while( !network_connect(nw, "::1", PORT) ){ //local address
+while( !network_connect(nw, SERVER_ADDRESS_IPV6, SERVER_PORT) ){
 	usleep(250000);
 }
 printf("Client > Connected to server.\n");

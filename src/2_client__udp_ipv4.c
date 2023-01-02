@@ -31,7 +31,7 @@ while(1){
 	// ---- RECEIVE ----
 
 	//receive reply (message will be reset automatically before reception)
-	network_setInfo(server, UDP_ADDRESS_IPV4, PORT);
+	network_setInfo(server, SERVER_ADDRESS_IPV4, SERVER_PORT);
 	network_receiveFrom(
 		nw, server,
 		message, MESSAGE_LENGTH_MAX
@@ -63,7 +63,7 @@ while(1){
 	getUserInput(message, MESSAGE_LENGTH_MAX);
 
 	//send message
-	network_setInfo(server, UDP_ADDRESS_IPV4, PORT); //local address
+	network_setInfo(server, SERVER_ADDRESS_IPV4, SERVER_PORT);
 	network_sendTo(
 		nw, server,
 		message, MESSAGE_LENGTH_MAX
