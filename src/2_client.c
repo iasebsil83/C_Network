@@ -47,9 +47,9 @@
 // ---------------- DEFINITIONS ----------------
 
 //connection
-#define SERVER_ADDRESS_IPV4 "192.168.0.108"
-#define SERVER_ADDRESS_IPV6 "fe80::db6b:d7c7:e2c6:1436"
-#define SERVER_PORT         8080
+#define SERVER_ADDRESS_IPV4 "127.0.0.1"
+#define SERVER_ADDRESS_IPV6 "::1"
+#define        PORT         5000
 
 //message
 #define MESSAGE_LENGTH_MAX 100
@@ -60,8 +60,8 @@
 #define MODE__UDP_IPV4 0x02
 #define MODE__UDP_IPV6 0x03
 
-// <<<<<<<<<<<<<<<<<<<<<<<<<<<< CHOOSE the mode you want
-#define DEMONSTRATION_MODE MODE__TCP_IPV4
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<< CHOOSE the one you want
+#define DEMONSTRATION_MODE MODE__UDP_IPV6
 
 
 

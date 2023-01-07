@@ -2,21 +2,26 @@ printf("Client > This is a basic demonstration of \"network.c/.h\"\n         for
 
 
 
+
 // ---- START ----
 
-//create socket
-network* nw = network_create(
+//create instance for myself (client)
+network* me = network_create(
 	NETWORK__CLIENT,
 	NETWORK__UDP,
 	NETWORK__IPV4
 );
 
-//create a network instance for the incomming server
-network* server = network_create(
-	NETWORK__SERVER,
-	NETWORK__UDP,
-	NETWORK__IPV4
-);
+//try to connect to server (after this operation, server is no longer used
+network* server = NULL; //  except for holding its data structure allocated)
+while(!server){         //  WARNING: Do NOT use server->fd because it is set to -1 (not to use).
+	server = network_connect(me, SERVER_ADDRESS_IPV4, PORT);
+	usleep(250000);
+}
+char* serverAddress = network_getAddress(server);
+printf("Client > Connected to server [%s].\n", serverAddress);
+free(serverAddress);
+
 
 
 
@@ -28,33 +33,6 @@ while(1){
 
 
 
-	// ---- RECEIVE ----
-
-	//receive reply (message will be reset automatically before reception)
-	network_setInfo(server, SERVER_ADDRESS_IPV4, SERVER_PORT);
-	network_receiveFrom(
-		nw, server,
-		message, MESSAGE_LENGTH_MAX
-	);
-
-	//exit reply
-	if(!strncmp(message,"exit",4)){
-		printf("Client > Exit request received.\n");
-		break;
-	}
-
-	//print reply
-	char* receivedAddress = network_getAddress(server);
-	printf("Client > Incomming message [%s] received from \"%c%c.%c%c.%c%c.%c%c\".\n",
-		message,
-		receivedAddress[0], receivedAddress[1],
-		receivedAddress[2], receivedAddress[3],
-		receivedAddress[4], receivedAddress[5],
-		receivedAddress[6], receivedAddress[7]
-	);
-	free(receivedAddress);
-
-
 
 	// ---- SEND ----
 
@@ -62,27 +40,51 @@ while(1){
 	printf("Client > Write something to send to server : ");
 	getUserInput(message, MESSAGE_LENGTH_MAX);
 
-	//send message
-	network_setInfo(server, SERVER_ADDRESS_IPV4, SERVER_PORT);
+	//send message (no need to precise server, connect() already stores it)
 	network_sendTo(
-		nw, server,
+		me, NULL,
 		message, MESSAGE_LENGTH_MAX
 	);
 
-	//exit reply
+	//specific reply : exit request
 	if(!strncmp(message,"exit",4)){
 		printf("Client > Exit request sent.\n");
 		break;
 	}
 
-	//wait a bit (500ms) in order to let the client receive the message before us
-	usleep(500000);
+
+
+
+	// ---- RECEIVE ----
+
+	//receive reply from server (no need to precise as well for the same reason)
+	network_receiveFrom(
+		me, NULL,
+		message, MESSAGE_LENGTH_MAX
+	);
+
+	//specific reply : exit request
+	if(!strncmp(message,"exit",4)){
+		printf("Client > Exit request received.\n");
+		break;
+	}
+
+	//print raw reply
+	char* receivedAddress = network_getAddress(server);
+	printf(
+		"Client > Incomming message \"%s\" received from [%s].\n",
+		message,
+		receivedAddress
+	);
+	free(receivedAddress);
 }
+
 
 
 
 // ---- STOP ----
 
 //end connection
-network_delete(nw);
+network_delete(me);
+network_delete(server);
 printf("Client > Ended network connection.\n");

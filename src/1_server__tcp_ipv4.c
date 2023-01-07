@@ -2,21 +2,24 @@ printf("Server > This is a basic demonstration of \"network.c/.h\"\n         for
 
 
 
+
 // ---- START ----
 
-//create socket
-network* nw = network_create(
+//create instance for myself (server)
+network* me = network_create(
 	NETWORK__SERVER,
 	NETWORK__TCP,
 	NETWORK__IPV4
 );
 
 //bind all addresses
-network_bind(nw, SERVER_PORT);
+network_bind(me, PORT);
 
-//accept the first address wanting to connect
-network* client = network_accept(nw);
-printf("Server > Accepted a client.\n");
+//accept the first incomming client
+network* client        = network_accept(me);
+char*    clientAddress = network_getAddress(client);
+printf("Server > Accepted client [%s].\n", clientAddress);
+free(clientAddress);
 
 
 
@@ -28,6 +31,7 @@ while(1){
 
 
 
+
 	// ---- SEND ----
 
 	//get user input
@@ -36,11 +40,11 @@ while(1){
 
 	//send message
 	network_sendTo(
-		nw, client,
+		me, client,
 		message, MESSAGE_LENGTH_MAX
 	);
 
-	//exit reply
+	//specific reply : exit request
 	if(!strncmp(message,"exit",4)){
 		printf("Server > Exit request sent.\n");
 		break;
@@ -48,28 +52,31 @@ while(1){
 
 
 
+
 	// ---- RECEIVE ----
 
-	//receive reply (message will be reset automatically before reception)
+	//receive reply (receive only from this specific client)
 	network_receiveFrom(
-		nw, client,
+		me, client,
 		message, MESSAGE_LENGTH_MAX
 	);
 
-	//exit reply
+	//specific reply : exit request
 	if(!strncmp(message,"exit",4)){
 		printf("Server > Exit request received.\n");
 		break;
 	}
 
-	//print reply
-	printf("Server > Message [%s] received.\n", message);
+	//print raw reply
+	printf("Server > Message \"%s\" received.\n", message);
 }
+
 
 
 
 // ---- STOP ----
 
 //end connection
-network_delete(nw);
+network_delete(me);
+network_delete(client);
 printf("Server > Ended network connection.\n");

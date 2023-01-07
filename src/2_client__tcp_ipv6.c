@@ -3,24 +3,24 @@ printf("Client > This is a basic demonstration of \"network.c/.h\"\n         for
 
 
 
-
-
 // ---- START ----
 
-//create socket
-network* nw = network_create(
+//create instance for myself (client)
+network* me = network_create(
 	NETWORK__CLIENT,
 	NETWORK__TCP,
 	NETWORK__IPV6
 );
 
-//try to connect
-while( !network_connect(nw, SERVER_ADDRESS_IPV6, SERVER_PORT) ){
+//try to connect to server (after this operation, server is no longer used
+network* server = NULL; //  except for holding its data structure allocated)
+while(!server){         //  WARNING: Do NOT use server->fd because it is set to -1 (not to use).
+	server = network_connect(me, SERVER_ADDRESS_IPV6, PORT);
 	usleep(250000);
 }
-printf("Client > Connected to server.\n");
-
-
+char* serverAddress = network_getAddress(server);
+printf("Client > Connected to server [%s].\n", serverAddress);
+free(serverAddress);
 
 
 
@@ -31,24 +31,25 @@ printf("Client > Connected to server.\n");
 char message[MESSAGE_LENGTH_MAX];
 while(1){
 
+
+
+
 	// ---- RECEIVE ----
 
-	//receive reply (message will be reset automatically before reception)
+	//receive reply (no need to precise server, connect() stores server info)
 	network_receiveFrom(
-		nw, NULL,
+		me, NULL,
 		message, MESSAGE_LENGTH_MAX
 	);
 
-	//exit reply
+	//specific reply : exit request
 	if(!strncmp(message,"exit",4)){
 		printf("Client > Exit request received.\n");
 		break;
 	}
 
-	//print reply
-	printf("Client > Message [%s] received.\n", message);
-
-
+	//print raw reply
+	printf("Client > Message \"%s\" received.\n", message);
 
 
 
@@ -59,13 +60,13 @@ while(1){
 	printf("Client > Write something to send to server : ");
 	getUserInput(message, MESSAGE_LENGTH_MAX);
 
-	//send message
+	//send message (no need to precise server as well for the same reason)
 	network_sendTo(
-		nw, NULL,
+		me, NULL,
 		message, MESSAGE_LENGTH_MAX
 	);
 
-	//exit reply
+	//specific reply : exit request
 	if(!strncmp(message,"exit",4)){
 		printf("Client > Exit request sent.\n");
 		break;
@@ -75,10 +76,9 @@ while(1){
 
 
 
-
-
 // ---- STOP ----
 
 //end connection
-network_delete(nw);
+network_delete(me);
+network_delete(server);
 printf("Client > Ended network connection.\n");

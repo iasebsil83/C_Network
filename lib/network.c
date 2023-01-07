@@ -7,21 +7,13 @@
 #include <unistd.h>
 #include <string.h>
 
-
-
 //network
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-
-
 //own header
 #include "network.h"
-
-
-
-
 
 
 
@@ -79,10 +71,6 @@
 
 
 
-
-
-
-
 // -------------------------------- BASICS --------------------------------
 
 //create - delete
@@ -90,7 +78,7 @@ network* network_create(char owner, char protocol, char IPType){
 
 	//create instance
 	network* nw = malloc(sizeof(network));
-	if(nw == NULL){
+	if(!nw){
 		printf("FATAL ERROR > network.c : network_create() : Computer refuses to give more memory.\n");
 		exit(EXIT_FAILURE);
 	}
@@ -117,12 +105,10 @@ network* network_create(char owner, char protocol, char IPType){
 
 	//allocate socket structure
 	nw->sock = malloc(nw->sock_size);
-	if(nw->sock == NULL){
+	if(!(nw->sock)){
 		printf("FATAL ERROR > network.c : network_create() : Computer refuses to give more memory.\n");
 		exit(EXIT_FAILURE);
 	}
-
-	//reset socket structure
 	bzero(nw->sock, nw->sock_size);
 
 	//set socket type
@@ -147,7 +133,7 @@ network* network_create(char owner, char protocol, char IPType){
 void network_delete(network* nw){
 
 	//error cases
-	if(nw == NULL){
+	if(!nw){
 		printf("RUNTIME ERROR > network.c : network_delete() : Network instance is NULL.\n");
 		return;
 	}
@@ -156,7 +142,7 @@ void network_delete(network* nw){
 	while( close(nw->fd) == -1 );
 
 	//free structure
-	if(nw->sock != NULL){
+	if(nw->sock){
 		free(nw->sock);
 	}
 	free(nw);
@@ -165,13 +151,11 @@ void network_delete(network* nw){
 
 
 
-
-
 //connect - bind - accept
 void network_bind(network* nw, unsigned short int port){ //available for servers only
 
 	//error case
-	if(nw == NULL){
+	if(!nw){
 		printf("RUNTIME ERROR > network.c : network_bind() : Network instance is NULL.\n");
 		return;
 	}
@@ -179,9 +163,6 @@ void network_bind(network* nw, unsigned short int port){ //available for servers
 		printf("RUNTIME ERROR > network.c : network_bind() : Network instance is set as \"CLIENT\" and clients cannot use network_bind().\n");
 		return;
 	}
-
-	//reset socket structure
-	bzero(nw->sock, nw->sock_size);
 
 	//set socket structure
 	int errorCode = 0;
@@ -224,18 +205,18 @@ void network_bind(network* nw, unsigned short int port){ //available for servers
 	}
 }
 
-network* network_accept(network* nw){ //available for servers in TCP only
+network* network_accept(network* server_nw){ //available for servers in TCP only
 
 	//error case
-	if(nw == NULL){
+	if(!server_nw){
 		printf("RUNTIME ERROR > network.c : network_accept() : Network instance is NULL.\n");
 		return NULL;
 	}
-	if( !network_getOwner(nw) ){
+	if( !network_getOwner(server_nw) ){
 		printf("RUNTIME ERROR > network.c : network_accept() : Network instance is set as \"CLIENT\" and clients cannot use network_accept().\n");
 		return NULL;
 	}
-	if( network_getPrtcl(nw) ){
+	if( network_getPrtcl(server_nw) ){
 		printf("RUNTIME ERROR > network.c : network_accept() : Network instance is set as \"UDP\" protocol and only \"TCP\" protocols can use network_accept().\n");
 		return NULL;
 	}
@@ -243,62 +224,67 @@ network* network_accept(network* nw){ //available for servers in TCP only
 	//create new client instance
 	network* client_nw = network_create(
 		NETWORK__CLIENT,
-		network_getPrtcl (nw),
-		network_getIPType(nw)
+		network_getPrtcl (server_nw), //same protocol
+		network_getIPType(server_nw)  //same IP type
 	);
 
+	//no need to have socket file descriptor => reset it
+	//close(client_nw->fd);	                 // (we should set it at -1 as well in theory
+	                                         //  but the following accept() will overwrite it)
     //accept new client
     client_nw->fd = accept(
-		nw->fd,
+		server_nw->fd,
 		(struct sockaddr*)(client_nw->sock),
-		&(nw->sock_size)
+		&(client_nw->sock_size)
 	);
 
 	return client_nw;
 }
 
-int network_connect(network* nw, char* address, unsigned short int port){ //available for clients in TCP only
+network* network_connect(network* client_nw, char* address, unsigned short int port){ //available for clients only (will return the server found)
 
 	//error cases
-	if(nw == NULL){
+	if(!client_nw){
 		printf("RUNTIME ERROR > network.c : network_connect() : Network instance is NULL.\n");
-		return 0;
+		return NULL;
 	}
-	if(address == NULL){
+	if(!address){
 		printf("RUNTIME ERROR > network.c : network_connect() : Address is NULL.\n");
-		return 0;
+		return NULL;
 	}
-	if( network_getOwner(nw) ){
+	if( network_getOwner(client_nw) ){
 		printf("RUNTIME ERROR > network.c : network_connect() : Network instance is set as \"SERVER\" and servers cannot use network_connect().\n");
-		return 0;
-	}
-	if( network_getPrtcl(nw) ){
-		printf("RUNTIME ERROR > network.c : network_connect() : Network instance is set as \"UDP\" protocol and only \"TCP\" protocols can use network_connect().\n");
-		return 0;
+		return NULL;
 	}
 
-	//reset socket structure
-	bzero(nw->sock, nw->sock_size);
+	//create new server instance
+	network* server_nw = network_create(
+		NETWORK__SERVER,
+		network_getPrtcl (client_nw), //same protocol
+		network_getIPType(client_nw)  //same IP type
+	);
 
-	//set socket structure
-	if( network_getIPType(nw) ){
+	//no need to have socket => reset file descriptor
+	//close(server_nw->fd);
+	//server_nw->fd = -1;
+
+	//set server socket structure
+	if( network_getIPType(server_nw) ){
 
 		//set formatted address
 		int errorCode = inet_pton(
 			AF_INET6,
 			address,
-			&(
-				( (struct sockaddr_in6*)(nw->sock) )->sin6_addr
-			)
+			&( ((struct sockaddr_in6*)(server_nw->sock))->sin6_addr )
 		);
 		if(errorCode != 1){
 			printf("RUNTIME ERROR > network.c : network_connect() : Invalid IPv6 address given \"%s\" [0x%02x].\n", address, errorCode);
-			return 0;
+			return NULL;
 		}
 
 		//set the other fields
-		( (struct sockaddr_in6*)(nw->sock) )->sin6_family = AF_INET6;
-		( (struct sockaddr_in6*)(nw->sock) )->sin6_port   = htons(port);
+		( (struct sockaddr_in6*)(server_nw->sock) )->sin6_family = AF_INET6;
+		( (struct sockaddr_in6*)(server_nw->sock) )->sin6_port   = htons(port);
 
 	}else{
 
@@ -306,49 +292,45 @@ int network_connect(network* nw, char* address, unsigned short int port){ //avai
 		int errorCode = inet_pton(
 			AF_INET,
 			address,
-			&(
-				( (struct sockaddr_in*)(nw->sock) )->sin_addr
-			)
+			&( ((struct sockaddr_in*)(server_nw->sock))->sin_addr )
 		);
 		if(errorCode != 1){
 			printf("RUNTIME ERROR > network.c : network_connect() : Invalid IPv4 address given \"%s\" [0x%02x].\n", address, errorCode);
-			return 0;
+			return NULL;
 		}
 
 		//set the other fields
-		( (struct sockaddr_in*)(nw->sock) )->sin_family = AF_INET;
-		( (struct sockaddr_in*)(nw->sock) )->sin_port   = htons(port);
+		( (struct sockaddr_in*)(server_nw->sock) )->sin_family = AF_INET;
+		( (struct sockaddr_in*)(server_nw->sock) )->sin_port   = htons(port);
 	}
 
 	//connect
 	int errorCode = connect(
-		nw->fd,
-		(struct sockaddr*)(nw->sock),
-		nw->sock_size
+		client_nw->fd,
+		(struct sockaddr*)(server_nw->sock),
+		server_nw->sock_size
 	);
 	if(errorCode){
 		printf("RUNTIME ERROR > network.c : network_connect() : Could not connect to server [0x%02x].\n", errorCode);
-		return 0;
+		return NULL;
 	}
 
 	//connection established
-	return 1;
+	return server_nw;
 }
 
 
 
 
-
-
 //sendTo - receiveFrom
-void network_sendTo(network* src, network* dest, char* data, size_t len){ // #data# must not be NULL or unallocated
+void network_sendTo(network* src, network* dst, char* data, size_t len){ // #data# must be not NULL and allocated
 
 	//error cases
-	if(src == NULL){
+	if(!src){
 		printf("RUNTIME ERROR > network.c : network_sendTo() : Source network instance is NULL.\n");
 		return;
 	}
-	if(data == NULL){
+	if(!data){
 		printf("RUNTIME ERROR > network.c : network_sendTo() : Data is NULL.\n");
 		return;
 	}
@@ -356,20 +338,31 @@ void network_sendTo(network* src, network* dest, char* data, size_t len){ // #da
 
 	//send data over UDP
 	if( network_getPrtcl(src) ){
-		if(dest == NULL){
-			printf("RUNTIME ERROR > network.c : network_receiveFrom() : Destination network instance is NULL.\n");
-			return;
+
+		//server
+		if( network_getOwner(src) ){
+			if(!dst){
+				printf("RUNTIME ERROR > network.c : network_sendTo() : Destination network instance is NULL.\n");
+				return;
+			}
+			errorCode = sendto(
+				src->fd,
+				data, len,
+				0,                             //flags
+				(struct sockaddr*)(dst->sock),
+				dst->sock_size
+			);
 		}
 
-		//server & client
-		errorCode = sendto(
-			src->fd,
-			data,
-			len,
-			0, //flags
-			(struct sockaddr*)(dest->sock), 
-			dest->sock_size
-		);
+		//client
+		else{
+			errorCode = sendto(
+				src->fd,
+				data, len,
+				0,         //flags
+				NULL, sizeof(struct sockaddr_in) //destination is not required for clients (connect() stores the server info)
+			);
+		}
 	}
 
 	//send data over TCP
@@ -377,15 +370,14 @@ void network_sendTo(network* src, network* dest, char* data, size_t len){ // #da
 
 		//server
 		if( network_getOwner(src) ){
-			if(dest == NULL){
+			if(!dst){
 				printf("RUNTIME ERROR > network.c : network_sendTo() : Destination network instance is NULL.\n");
 				return;
 			}
 			errorCode = send(
-				dest->fd,
-				data,
-				len,
-				0       //flags
+				dst->fd,
+				data, len,
+				0          //flags
 			);
 		}
 
@@ -393,9 +385,8 @@ void network_sendTo(network* src, network* dest, char* data, size_t len){ // #da
 		else{
 			errorCode = send(
 				src->fd,
-				data,
-				len,
-				0       //flags
+				data, len,
+				0          //flags
 			);
 		}
 	}
@@ -406,10 +397,10 @@ void network_sendTo(network* src, network* dest, char* data, size_t len){ // #da
 	}
 }
 
-void network_receiveFrom(network* src, network* dest, char* data, size_t len){ // #data# shall be NULL or unallocated
+void network_receiveFrom(network* src, network* dst, char* data, size_t len){ // #data# must be not NULL and unallocated
 
     //error cases
-	if(src == NULL){
+	if(!src){
 		printf("RUNTIME ERROR > network.c : network_receiveFrom() : Source network instance is NULL.\n");
 		return;
 	}
@@ -417,23 +408,33 @@ void network_receiveFrom(network* src, network* dest, char* data, size_t len){ /
 
 	//receive data over UDP
 	if( network_getPrtcl(src) ){
-		if(dest == NULL){
-			printf("RUNTIME ERROR > network.c : network_receiveFrom() : Destination network instance is NULL.\n");
-			return;
+
+		//server
+		if( network_getOwner(src) ){
+			if(!dst){
+				printf("RUNTIME ERROR > network.c : network_sendTo() : Destination network instance is NULL.\n");
+				return;
+			}
+			bzero(data, len);
+			errorCode = recvfrom(
+				src->fd,
+				data, len,
+				0,                             //flags
+				(struct sockaddr*)(dst->sock),
+				&(dst->sock_size)
+			);
 		}
 
-		//reset data
-		bzero(data, len);
-
-		//server & client
-		errorCode = recvfrom(
-			src->fd,
-			data,
-			len,
-			0,                              //flags
-			(struct sockaddr*)(dest->sock),
-			&(dest->sock_size)
-		);
+		//client
+		else{
+			bzero(data, len);
+			errorCode = recvfrom(
+				src->fd,
+				data, len,
+				0,         //flags
+				NULL, NULL //destination is not required for clients (connect() stores the server info)
+			);
+		}
 	}
 
 	//receive data over TCP
@@ -441,35 +442,25 @@ void network_receiveFrom(network* src, network* dest, char* data, size_t len){ /
 
 		//server
 		if( network_getOwner(src) ){
-			if(dest == NULL){
+			if(!dst){
 				printf("RUNTIME ERROR > network.c : network_receiveFrom() : Destination network instance is NULL.\n");
 				return;
 			}
-
-			//reset data
 			bzero(data, len);
-
-			//reception
 			errorCode = recv(
-				dest->fd,
-				data,
-				len,
-				0       //flags
+				dst->fd,
+				data, len,
+				0          //flags
 			);
 		}
 
 		//client
 		else{
-
-			//reset data
 			bzero(data, len);
-
-			//reception
 			errorCode = recv(
 				src->fd,
-				data,
-				len,
-				0       //flags
+				data, len,
+				0          //flags
 			);
 		}
 	}
@@ -483,69 +474,25 @@ void network_receiveFrom(network* src, network* dest, char* data, size_t len){ /
 
 
 
-
-
-//get / set info
-static char network_byteToChar(char b){
-	switch(b){
-
-		//numbers
-		case 0x0:
-			return '0';
-		case 0x1:
-			return '1';
-		case 0x2:
-			return '2';
-		case 0x3:
-			return '3';
-		case 0x4:
-			return '4';
-		case 0x5:
-			return '5';
-		case 0x6:
-			return '6';
-		case 0x7:
-			return '7';
-		case 0x8:
-			return '8';
-		case 0x9:
-			return '9';
-
-		//letters
-		case 0xa:
-			return 'a';
-		case 0xb:
-			return 'b';
-		case 0xc:
-			return 'c';
-		case 0xd:
-			return 'd';
-		case 0xe:
-			return 'e';
-		case 0xf:
-			return 'f';
-	}
-	return ' ';
-}
-
-char* network_getAddress(network* nw){ //will allocate 16 bytes
-
-	//error cases
-	if(nw == NULL){
+//user information
+char* network_getAddress(network* nw){ //will allocate 16 bytes for IPv4, 40 bytes for IPv6
+	                                   //IPv4 may be displayed on less characters (7-15 chars + \0)
+	//error cases                      //IPv6 will always be displayed on 38 bytes (+ \0)
+	if(!nw){
 		printf("RUNTIME ERROR > network.c : network_getAddress() : Network instance is NULL.\n");
 		return NULL;
 	}
-
-	//prepare result
-	char* address = malloc(32);
-	if(address == NULL){
-		printf("FATAL ERROR > network.c : network_getAddress() : Computer refuses to give more memory.\n");
-		exit(EXIT_FAILURE);
-	}
-	bzero(address, 32);
+	char* addressStr;
 
 	//IPv6
 	if( network_getIPType(nw) ){
+
+		//prepare result
+		addressStr = malloc(40);
+		if(!addressStr){
+			printf("FATAL ERROR > network.c : network_getAddress() : Computer refuses to give more memory.\n");
+			exit(EXIT_FAILURE);
+		}
 
 		//get address
 		uint8_t* ipv6_address = (
@@ -554,132 +501,49 @@ char* network_getAddress(network* nw){ //will allocate 16 bytes
 			)->sin6_addr
 		).s6_addr;
 
-		//copy in allocated result
-		address[ 0] = network_byteToChar(  ipv6_address[0x0] & 0x0f       );
-		address[ 1] = network_byteToChar( (ipv6_address[0x0] & 0xf0) >> 4 );
-
-		address[ 2] = network_byteToChar(  ipv6_address[0x1] & 0x0f       );
-		address[ 3] = network_byteToChar( (ipv6_address[0x1] & 0xf0) >> 4 );
-
-		address[ 4] = network_byteToChar(  ipv6_address[0x2] & 0x0f       );
-		address[ 5] = network_byteToChar( (ipv6_address[0x2] & 0xf0) >> 4 );
-
-		address[ 6] = network_byteToChar(  ipv6_address[0x3] & 0x0f       );
-		address[ 7] = network_byteToChar( (ipv6_address[0x3] & 0xf0) >> 4 );
-
-		address[ 8] = network_byteToChar(  ipv6_address[0x4] & 0x0f       );
-		address[ 9] = network_byteToChar( (ipv6_address[0x4] & 0xf0) >> 4 );
-
-		address[10] = network_byteToChar(  ipv6_address[0x5] & 0x0f       );
-		address[11] = network_byteToChar( (ipv6_address[0x5] & 0xf0) >> 4 );
-
-		address[12] = network_byteToChar(  ipv6_address[0x6] & 0x0f       );
-		address[13] = network_byteToChar( (ipv6_address[0x6] & 0xf0) >> 4 );
-
-		address[14] = network_byteToChar(  ipv6_address[0x7] & 0x0f       );
-		address[15] = network_byteToChar( (ipv6_address[0x7] & 0xf0) >> 4 );
-
-		address[16] = network_byteToChar(  ipv6_address[0x8] & 0x0f       );
-		address[17] = network_byteToChar( (ipv6_address[0x8] & 0xf0) >> 4 );
-
-		address[18] = network_byteToChar(  ipv6_address[0x9] & 0x0f       );
-		address[19] = network_byteToChar( (ipv6_address[0x9] & 0xf0) >> 4 );
-
-		address[20] = network_byteToChar(  ipv6_address[0xa] & 0x0f       );
-		address[21] = network_byteToChar( (ipv6_address[0xa] & 0xf0) >> 4 );
-
-		address[22] = network_byteToChar(  ipv6_address[0xb] & 0x0f       );
-		address[23] = network_byteToChar( (ipv6_address[0xb] & 0xf0) >> 4 );
-
-		address[24] = network_byteToChar(  ipv6_address[0xc] & 0x0f       );
-		address[25] = network_byteToChar( (ipv6_address[0xc] & 0xf0) >> 4 );
-
-		address[26] = network_byteToChar(  ipv6_address[0xd] & 0x0f       );
-		address[27] = network_byteToChar( (ipv6_address[0xd] & 0xf0) >> 4 );
-
-		address[28] = network_byteToChar(  ipv6_address[0xe] & 0x0f       );
-		address[29] = network_byteToChar( (ipv6_address[0xe] & 0xf0) >> 4 );
-
-		address[30] = network_byteToChar(  ipv6_address[0xf] & 0x0f       );
-		address[31] = network_byteToChar( (ipv6_address[0xf] & 0xf0) >> 4 );
+		//write address in result (hex format, byte per byte)
+		sprintf(
+			addressStr,
+			"%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x",
+			ipv6_address[ 0], ipv6_address[ 1], ipv6_address[ 2], ipv6_address[ 3],
+			ipv6_address[ 4], ipv6_address[ 5], ipv6_address[ 6], ipv6_address[ 7],
+			ipv6_address[ 8], ipv6_address[ 9], ipv6_address[10], ipv6_address[11],
+			ipv6_address[12], ipv6_address[13], ipv6_address[14], ipv6_address[15]
+		);
+		addressStr[39] = '\0';
 	}
 
 	//IPv4
 	else{
 
+		//prepare result
+		addressStr = malloc(16);
+		if(!addressStr){
+			printf("FATAL ERROR > network.c : network_getAddress() : Computer refuses to give more memory.\n");
+			exit(EXIT_FAILURE);
+		}
+
 		//get address
-		uint32_t ipv4_address = (
+		uint32_t ipv4_address_uint32 = (
 			(
 				(struct sockaddr_in*)(nw->sock)
 			)->sin_addr
 		).s_addr;
+		uint8_t* ipv4_address = (uint8_t*)&ipv4_address_uint32;
+//		uint32_t ipv4_address_1 = (int)ipv4_address[0];
+//		uint32_t ipv4_address_2 = (int)ipv4_address[1];
+//		uint32_t ipv4_address_3 = (int)ipv4_address[2];
+//		uint32_t ipv4_address_4 = (int)ipv4_address[3];
 
-		//copy in allocated result
-		address[ 0] = network_byteToChar( (ipv4_address & 0x000000f0) >>  4 );
-		address[ 1] = network_byteToChar(  ipv4_address & 0x0000000f        );
-
-		address[ 2] = network_byteToChar( (ipv4_address & 0x0000f000) >> 12 );
-		address[ 3] = network_byteToChar( (ipv4_address & 0x00000f00) >>  8 );
-
-		address[ 4] = network_byteToChar( (ipv4_address & 0x00f00000) >> 20 );
-		address[ 5] = network_byteToChar( (ipv4_address & 0x000f0000) >> 16 );
-
-		address[ 6] = network_byteToChar( (ipv4_address & 0xf0000000) >> 28 );
-		address[ 7] = network_byteToChar( (ipv4_address & 0x0f000000) >> 24 );
-
-		address[ 8] = 0; address[ 9] = 0; address[10] = 0; address[11] = 0;
-		address[12] = 0; address[13] = 0; address[14] = 0; address[15] = 0;
-		address[16] = 0; address[17] = 0; address[18] = 0; address[19] = 0;
-		address[20] = 0; address[21] = 0; address[22] = 0; address[23] = 0;
-		address[24] = 0; address[25] = 0; address[26] = 0; address[27] = 0;
-		address[28] = 0; address[29] = 0; address[30] = 0; address[31] = 0;
-	}
-
-	return address;
-}
-
-void network_setInfo(network* nw, char* address, unsigned short int port){
-
-	//error cases
-	if(nw == NULL){
-		printf("RUNTIME ERROR > network.c : network_setInfo() : Network instance is NULL.\n");
-		return;
-	}
-	if(address == NULL){
-		printf("RUNTIME ERROR > network.c : network_setInfo() : Address is NULL.\n");
-		return;
-	}
-
-	//IP type
-	int errorCode = 1;
-	if( network_getIPType(nw) ){
-
-		//IPv6
-		errorCode = inet_pton(
-			AF_INET6,
-			address,
-			&(
-				( (struct sockaddr_in6*)(nw->sock) )->sin6_addr
-			)
+		//write address in result (dec format, byte per byte)
+		bzero(addressStr, 16);
+		sprintf(
+			addressStr,
+			"%i.%i.%i.%i",
+			ipv4_address[0], ipv4_address[1],
+			ipv4_address[2], ipv4_address[3]
 		);
-		( (struct sockaddr_in6*)(nw->sock) )->sin6_family = AF_INET6;
-		( (struct sockaddr_in6*)(nw->sock) )->sin6_port   = htons(port);
-	}else{
-
-		//IPv4
-		errorCode = inet_pton(
-			AF_INET,
-			address,
-			&(
-				( (struct sockaddr_in*)(nw->sock) )->sin_addr
-			)
-		);
-		( (struct sockaddr_in*)(nw->sock) )->sin_family = AF_INET;
-		( (struct sockaddr_in*)(nw->sock) )->sin_port   = htons(port);
 	}
 
-	//error
-	if(errorCode != 1){
-		printf("RUNTIME ERROR > network.c : network_setInfo() : Could not set address [0x%02x].\n", errorCode);
-	}
+	return addressStr;
 }
