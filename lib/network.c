@@ -139,7 +139,9 @@ void network_delete(network* nw){
 	}
 
 	//flush data in socket
-	while( close(nw->fd) == -1 );
+	if(nw->fd != -1){
+		while( close(nw->fd) == -1 );
+	}
 
 	//free structure
 	if(nw->sock){
@@ -229,7 +231,7 @@ network* network_accept(network* server_nw){ //available for servers in TCP only
 	);
 
 	//no need to have socket file descriptor => reset it
-	//close(client_nw->fd);	                 // (we should set it at -1 as well in theory
+	close(client_nw->fd);	                 // (we should set it at -1 as well in theory
 	                                         //  but the following accept() will overwrite it)
     //accept new client
     client_nw->fd = accept(
@@ -265,8 +267,8 @@ network* network_connect(network* client_nw, char* address, unsigned short int p
 	);
 
 	//no need to have socket => reset file descriptor
-	//close(server_nw->fd);
-	//server_nw->fd = -1;
+	close(server_nw->fd);
+	server_nw->fd = -1;
 
 	//set server socket structure
 	if( network_getIPType(server_nw) ){
